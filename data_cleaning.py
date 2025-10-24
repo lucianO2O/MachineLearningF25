@@ -22,7 +22,7 @@ for column in gamesData.columns:    # loops through all columns
 # want to remove # of people who voted for tags in the column and just leave the tag
 gamesData['tags'] = gamesData['tags'].str.replace(r'[0-9:]', '', regex=True) # gets rid of the numbers and colon
 # want to convert tags column from string looking lists to actual lists
-cleanedTags = []    # empty set ot store the new cleaned column
+cleanedTags = []    # empty set to store the new cleaned column
 for cell in gamesData['tags']:
     if cell in ('None', 'NaN', 'nan' ''):
         cleanedTags.append(np.nan)      # if NaN already, then just append to this new empty set
