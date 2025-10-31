@@ -4,7 +4,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import classification_report
 
-filteredDf = pd.read_csv('filtered_Df.csv')
+filteredDf = pd.read_csv('CSV_files/filtered_Df.csv')
 randomizedDf = filteredDf.sample(frac = 1, random_state = 42)
 randomizedDf = randomizedDf.reset_index(drop = True)
 # must encode categorical columns to be numerical

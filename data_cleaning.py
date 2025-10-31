@@ -3,7 +3,7 @@ import numpy as np
 import ast
 
 # read csv file
-gamesData = pd.read_csv('games_march2025_full.csv')
+gamesData = pd.read_csv('CSV_files/games_march2025_full.csv')
 # show all columns when printing
 pd.set_option('display.max_columns', None)
 
