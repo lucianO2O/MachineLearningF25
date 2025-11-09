@@ -1,6 +1,9 @@
 import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.decomposition import TruncatedSVD
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import classification_report
 
@@ -8,16 +11,30 @@ filteredDf = pd.read_csv('CSV_files/filtered_Df.csv')
 randomizedDf = filteredDf.sample(frac = 1, random_state = 42)
 randomizedDf = randomizedDf.reset_index(drop = True)
 # must encode categorical columns to be numerical
-categoricalColumns = ["developers", "publishers", "categories", "genres", "tags"]
-numericColumns = ["price", "windows", "mac", "linux"]
-encoder = OneHotEncoder(handle_unknown = 'ignore', sparse_output = False)   # ignores unknowns
-encoderTransform = pd.DataFrame(encoder.fit_transform(randomizedDf[categoricalColumns]), columns = encoder.get_feature_names_out(categoricalColumns))    # just transforms the columns into numerical data and then recovers the names, converts to dataframe
-X = pd.concat([randomizedDf[numericColumns].reset_index(drop = True), encoderTransform.reset_index(drop = True)], axis = 1)     # concatenates numerical and categorical data transformed to numerical, resets the index and drops the old one
-y = randomizedDf["recommendation"]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=12, shuffle=True)
-model = LogisticRegression(max_iter=1000)
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
-model.score(X_test, y_test)
-print(f"Accuracy = {model.score(X_test, y_test)}")
+categorical = ["developers", "publishers", "categories", "genres", "tags"]
+numeric = ["price", "windows", "mac", "linux"]
+# want to chop down number of individual/ unique values within the categorical columns, as after OHE it spat out 34000 columns (unworkable and crashed my laptop)
+# one-hot categorical (sparse), pass numeric through
+ct = ColumnTransformer(transformers=[("ohe", OneHotEncoder(handle_unknown='ignore', sparse_output=True), categorical)],
+    remainder='passthrough',   # numeric columns appended
+    sparse_threshold=0.0       # keep sparse output
+)
+# choose n_components for SVD
+svd = TruncatedSVD(n_components = 150, random_state=42) # 150 features max
+# pipeline from scikit, makes fitting data EXTREMELY easy
+pipeline = Pipeline([("ct", ct), ("svd", svd), ("clf", LogisticRegression(max_iter=1000))]) # essentially just allows me to put preprocessors (to cut down on the # of columns (one hot encoder creates 10s of thousands for my data)) in order to make the data more workable, max_iter = 1000 for logistic regression to balance convergence and perforance
+X = randomizedDf[categorical + numeric]
+y = randomizedDf['recommendation']
+# split for training and testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, random_state = 12, shuffle = True)
+pipeline.fit(X_train, y_train)  # fit pipeline to training data
+y_pred = pipeline.predict(X_test)
+pipeline.score(X_test, y_test)
+pipeline.predict(X_test)
+print(f"Accuracy = {pipeline.score(X_test, y_test)}")
 print(classification_report(y_test, y_pred))
+print(f"Original shape: {randomizedDf.shape}")
+X_ct = pipeline.named_steps['ct'].transform(X_train) # named_steps allows access to transformers
+X_svd = pipeline.named_steps['svd'].transform(X_ct)
+print(X_ct.shape, "after ColumnTransformer")    # printing shape after pipeline transformations
+print(X_svd.shape, "after SVD")
