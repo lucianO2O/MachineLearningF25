@@ -62,6 +62,6 @@ revFilter = gamesData[gamesData['num_reviews_total'] >= 100]
 filteredDf = pd.concat([
     revFilter[revFilter['recommendation'] == 1].sample(7000, random_state=42), # essentially creating two dataframes and then combining them (.concat)
     revFilter[revFilter['recommendation'] == 0].sample(7000, random_state=42) ])
-filteredDf.to_csv('filtered_Df.csv', index = False)
+filteredDf.to_csv('CSV_files/filtered_Df.csv', index = False)
 
 print(filteredDf.shape)
