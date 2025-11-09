@@ -3,7 +3,7 @@ import seaborn as sns
 from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB, BernoulliNB
+from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -24,7 +24,7 @@ ct = ColumnTransformer(transformers=[("ohe", OneHotEncoder(handle_unknown='ignor
 )
 # choose n_components for SVD
 svd = TruncatedSVD(n_components = 150, random_state=42) # 150 features max
-# pipeline from scikit, makes fitting data EXTREMELY easy
+# pipeline from scikit, makes fitting data EXTREMELY easy, especially when working with encoding for categorical columns. using over "model"
 pipeline = Pipeline([("ct", ct), ("svd", svd), ("clf", GaussianNB())]) # essentially just allows me to put preprocessors (to cut down on the # of columns (one hot encoder creates 10s of thousands for my data)) in order to make the data more workable
 X = randomizedDf[categorical + numeric]
 y = randomizedDf['recommendation']
@@ -62,17 +62,17 @@ plt.ylabel('Price')
 plt.show()
 
 # confusion matrix tells which classes the model is confusing
-disp = ConfusionMatrixDisplay(confusion_matrix = confusion_matrix(y_test, y_pred), display_labels = model.classes_)
+disp = ConfusionMatrixDisplay(confusion_matrix = confusion_matrix(y_test, y_pred), display_labels = pipeline.classes_)
 disp.plot(cmap='Blues')
 plt.title("Confusion Matrix | Naive Bayes")
 plt.show()
 
 # get predicted probabilities
-y_proba = model.predict_proba(X_test)
+y_proba = pipeline.predict_proba(X_test)
 
-# plot the probability distribution for recommendation to see prediction trends
+# plot the probability distribution for recommendation to see prediction trends, essentially a confidence scale from 0 being least confident that the output = 1 (recommended) to 1 being most confident
 plt.hist(y_proba[:,1], bins=30, color='skyblue', edgecolor='black')
-plt.title("Predicted Probability Distribution for Recommendation")
+plt.title("Predicted Probability Distribution for Recommendation, Confidence Scale for the Algorithm")
 plt.xlabel("Predicted Probability")
 plt.ylabel("Frequency")
 plt.show()
