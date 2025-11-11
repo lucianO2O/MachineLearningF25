@@ -18,14 +18,14 @@ categorical = ["developers", "publishers", "categories", "genres", "tags"]
 numeric = ["price", "windows", "mac", "linux"]
 # want to chop down number of individual/ unique values within the categorical columns, as after OHE it spat out 34000 columns (unworkable and crashed my laptop)
 # one-hot categorical (sparse), pass numeric through
-ct = ColumnTransformer(transformers=[("ohe", OneHotEncoder(handle_unknown='ignore', sparse_output=True), categorical)],
+categorical_transformer = ColumnTransformer(transformers=[("ohe", OneHotEncoder(handle_unknown='ignore', sparse_output=True), categorical)],
     remainder='passthrough',   # numeric columns appended
     sparse_threshold=0.0       # keep sparse output
 )
-# choose n_components for SVD
+# choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for sparse output
 svd = TruncatedSVD(n_components = 150, random_state=42) # 150 features max
 # pipeline from scikit, makes fitting data EXTREMELY easy, especially when working with encoding for categorical columns. using over "model"
-pipeline = Pipeline([("ct", ct), ("svd", svd), ("clf", GaussianNB())]) # essentially just allows me to put preprocessors (to cut down on the # of columns (one hot encoder creates 10s of thousands for my data)) in order to make the data more workable
+pipeline = Pipeline([("ct", categorical_transformer), ("svd", svd), ("clf", GaussianNB())]) # essentially just allows me to put preprocessors to cut down on the # of columns (one hot encoder creates 10s of thousands for my data) in order to make the data more workable
 X = randomizedDf[categorical + numeric]
 y = randomizedDf['recommendation']
 # split for training and testing
@@ -67,12 +67,20 @@ disp.plot(cmap='Blues')
 plt.title("Confusion Matrix | Naive Bayes")
 plt.show()
 
-# get predicted probabilities
-y_proba = pipeline.predict_proba(X_test)
-
 # plot the probability distribution for recommendation to see prediction trends, essentially a confidence scale from 0 being least confident that the output = 1 (recommended) to 1 being most confident
-plt.hist(y_proba[:,1], bins=30, color='skyblue', edgecolor='black')
-plt.title("Predicted Probability Distribution for Recommendation, Confidence Scale for the Algorithm")
-plt.xlabel("Predicted Probability")
-plt.ylabel("Frequency")
+y_proba = pipeline.predict_proba(X_test)[:, 1]  # if the game is recommended (output = 1)
+
+# separate probabilities by actual class
+proba_recommended = y_proba[y_test == 1]
+proba_not_recommended = y_proba[y_test == 0]
+
+# plot overlapping histograms to show how confident model waas
+plt.figure(figsize=(8,5)) # don't want anything being cut off, big figure
+plt.hist(proba_recommended, bins=30, alpha=0.6, color='green', label='Actual Recommended (1)', edgecolor='black')
+plt.hist(proba_not_recommended, bins=30, alpha=0.6, color='red', label='Actual Not Recommended (0)', edgecolor='black')
+
+plt.title('Predicted Probability Distribution by Target Output')
+plt.xlabel('Predicted Probability of Recommendation')
+plt.ylabel('Frequency')
+plt.legend()
 plt.show()

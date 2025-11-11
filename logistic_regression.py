@@ -17,14 +17,14 @@ categorical = ["developers", "publishers", "categories", "genres", "tags"]
 numeric = ["price", "windows", "mac", "linux"]
 # want to chop down number of individual/ unique values within the categorical columns, as after OHE it spat out 34000 columns (unworkable and crashed my laptop)
 # one-hot categorical (sparse), pass numeric through
-ct = ColumnTransformer(transformers=[("ohe", OneHotEncoder(handle_unknown='ignore', sparse_output=True), categorical)],
-    remainder='passthrough',   # numeric columns appended
+categorical_transformer = ColumnTransformer(transformers=[("ohe", OneHotEncoder(handle_unknown='ignore', sparse_output=True), categorical)],
+    remainder='passthrough',   # numeric columns appended (left unchanged)
     sparse_threshold=0.0       # keep sparse output
 )
-# choose n_components for SVD
+# choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for sparse output
 svd = TruncatedSVD(n_components = 150, random_state=42) # 150 features max
-# pipeline from scikit, makes fitting data EXTREMELY easy, especially when working with encoding for categorical columns. using over "model"
-pipeline = Pipeline([("ct", ct), ("svd", svd), ("clf", LogisticRegression(max_iter=1000))]) # essentially just allows me to put preprocessors (to cut down on the # of columns (one hot encoder creates 10s of thousands for my data)) in order to make the data more workable, max_iter = 1000 for logistic regression to balance convergence and perforance
+# pipeline from scikit, makes fitting data EXTREMELY easy, especially when working with encoding for categorical columns. using over "model" method
+pipeline = Pipeline([("ct", categorical_transformer), ("svd", svd), ("clf", LogisticRegression(max_iter=1000))]) # essentially just allows me to put preprocessors (to cut down on the # of columns (one hot encoder creates 10s of thousands for my data)) in order to make the data more workable, max_iter = 1000 for logistic regression to balance convergence and perforance
 X = randomizedDf[categorical + numeric]
 y = randomizedDf['recommendation']
 # split for training and testing
