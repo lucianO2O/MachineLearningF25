@@ -11,7 +11,9 @@ pd.set_option('display.max_columns', None)
 gamesData = gamesData.drop_duplicates()
 # get rid of playtest games that have no data
 gamesData = gamesData[~gamesData['name'].str.contains('playtest', case = False, na = False)]
-# want to change empty cells to null, they are currently strings with nothing inside in the dataset
+# want to remove # of people who voted for tags in the column and just leave the tag
+gamesData['tags'] = gamesData['tags'].str.replace(r'[0-9:]', '', regex=True) # gets rid of the numbers and colon
+# want to change empty cells to null, they are currently strings with nothing inside in the tags column, but checking all columns for continuity's sake
 for column in gamesData.columns:    # loops through all columns
     cleanedColumn = []      # temp set for cleaned values
     for cell in gamesData[column]:      # loops through each specific cell in column
@@ -19,8 +21,6 @@ for column in gamesData.columns:    # loops through all columns
             cleanedColumn.append(np.nan)    # convert the empty cell to an ACTUAL null
         else: cleanedColumn.append(cell)    # else just append it
     gamesData[column] = cleanedColumn   # set column equal to the new cleaned one
-# want to remove # of people who voted for tags in the column and just leave the tag
-gamesData['tags'] = gamesData['tags'].str.replace(r'[0-9:]', '', regex=True) # gets rid of the numbers and colon
 # want to convert tags column from string looking lists to actual lists
 cleanedTags = []    # empty set to store the new cleaned column
 for cell in gamesData['tags']:
