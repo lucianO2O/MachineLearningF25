@@ -3,10 +3,10 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.decomposition import TruncatedSVD
 from sklearn.model_selection import train_test_split
-from sklearn.svm import LinearSVC   # linearSVC b/c it works better with large datasets, supports sparse output, and is for classification tasks
+from sklearn.svm import LinearSVC   # linearSVC b/c it works better with large datasets and for classification tasks
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, MultiLabelBinarizer
-from sklearn.metrics import classification_report, ConfusionMatrixDisplay, confusion_matrix
+from sklearn.metrics import classification_report, ConfusionMatrixDisplay, confusion_matrix, roc_curve, auc
 
 filteredDf = pd.read_csv('CSV_files/filtered_Df.csv')
 randomizedDf = filteredDf.sample(frac = 1, random_state = 42)
@@ -38,7 +38,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, rand
 pipeline.fit(X_train, y_train)  # fit pipeline to training data
 y_pred = pipeline.predict(X_test)
 y_pred_train = pipeline.predict(X_train)
-y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
 
 pipeline.score(X_test, y_test)
 pipeline.predict(X_test)
@@ -58,4 +57,20 @@ print(X_svd.shape, "shape after SVD")
 disp = ConfusionMatrixDisplay(confusion_matrix = confusion_matrix(y_test, y_pred), display_labels = pipeline.classes_)
 disp.plot(cmap='Blues')
 plt.title("Confusion Matrix | LinearSVC")
+plt.show()
+
+# calculate ROC curve
+decision_scores = pipeline.decision_function(X_test)
+fpr, tpr, thresholds = roc_curve(y_test, decision_scores)
+roc_auc = auc(fpr, tpr)
+# plot the ROC curve
+plt.figure()
+plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], 'k--', label='No Skill')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve for Steam Recommendation Classification')
+plt.legend()
 plt.show()
