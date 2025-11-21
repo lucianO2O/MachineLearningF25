@@ -30,7 +30,7 @@ stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), colu
 # choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for sparse output
 # pipeline from scikit, makes fitting data very easy with SVD, using over "model"
 pipeline = Pipeline([("svd", TruncatedSVD(n_components = 150, random_state=42)),    # 150 features
-                     ("clf", LinearSVC())]) # max_iter = 1000 for logistic regression to balance convergence and performance
+                     ("clf", LinearSVC())])
 X = pd.concat([stringsTransformed, listsTransformed, randomizedDf[numerics]], axis = 1)
 y = randomizedDf['recommendation']
 # split for training and testing
