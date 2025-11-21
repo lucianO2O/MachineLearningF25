@@ -5,7 +5,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import MultiLabelBinarizer, OneHotEncoder, FunctionTransformer
+from sklearn.preprocessing import MultiLabelBinarizer, OneHotEncoder
 from sklearn.metrics import classification_report, ConfusionMatrixDisplay, confusion_matrix, roc_curve, auc
 
 filteredDf = pd.read_csv('CSV_files/filtered_Df.csv')
@@ -38,7 +38,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, rand
 pipeline.fit(X_train, y_train)  # fit pipeline to training data
 y_pred = pipeline.predict(X_test)
 y_pred_train = pipeline.predict(X_train)
-y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
 
 pipeline.score(X_test, y_test)
 pipeline.predict(X_test)
@@ -62,6 +61,7 @@ plt.title("Confusion Matrix | Logistic Regression")
 plt.show()
 
 # calculate ROC curve
+y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
 fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
 roc_auc = auc(fpr, tpr)
 # plot the ROC curve
