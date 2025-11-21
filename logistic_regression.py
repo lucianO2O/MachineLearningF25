@@ -21,14 +21,14 @@ numerics = ["price", "windows", "mac", "linux"]
 
 mlbDfs = []
 for column in lists:
-    mlb = MultiLabelBinarizer(sparse_output=True)
+    mlb = MultiLabelBinarizer(sparse_output = False)
     matrix = mlb.fit_transform(randomizedDf[column])           # sparse (n_samples, n_labels_for_column)
-    dfColumn = pd.DataFrame.sparse.from_spmatrix(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column
+    dfColumn = pd.DataFrame(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column
     mlbDfs.append(dfColumn)     # appends each column in dataframe to one dataframe
 listsTransformed = pd.concat(mlbDfs, axis = 1)
 
-ohe = OneHotEncoder(handle_unknown = "ignore", sparse_output = True)
-stringsTransformed = pd.DataFrame.sparse.from_spmatrix(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # specifically for sparse matrices, converts to DF
+ohe = OneHotEncoder(handle_unknown = "ignore", sparse_output = False)
+stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # specifically for sparse matrices, converts to DF
 
 # choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for sparse output
 # pipeline from scikit, makes fitting data very easy with SVD, using over "model"
@@ -49,12 +49,12 @@ pipeline.predict(X_test)
 print(f"Accuracy = {pipeline.score(X_test, y_test)}")
 print("Classification Report for training:\n", classification_report(y_train, y_pred_train))
 print("Classification Report for testing:\n", classification_report(y_test, y_pred))
-print(f"Original shape: {randomizedDf.shape}")
 # general info about cleaned dataset
 print(randomizedDf.info())
 print(randomizedDf.describe())
 print(randomizedDf['recommendation'].value_counts()) # counts how many of each output the column has (both 7000, I did this in the data cleaning step)
 X_svd = pipeline.named_steps['svd'].transform(X_train)
+print(f"Original shape: {randomizedDf.shape}")
 print(X_svd.shape, "shape after SVD")
 # visualization
 
