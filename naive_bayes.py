@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, MultiLabelBinarizer
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc
 from sklearn.metrics import classification_report
 from matplotlib import pyplot as plt
 
@@ -40,7 +40,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, rand
 pipeline.fit(X_train, y_train)  # fit pipeline to training data
 y_pred = pipeline.predict(X_test)
 y_pred_train = pipeline.predict(X_train)
-y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
 
 pipeline.score(X_test, y_test)
 pipeline.predict(X_test)
@@ -82,7 +81,7 @@ y_proba = pipeline.predict_proba(X_test)[:, 1]  # if the game is recommended (ou
 proba_recommended = y_proba[y_test == 1]
 proba_not_recommended = y_proba[y_test == 0]
 
-# plot overlapping histograms to show how confident model waas
+# plot overlapping histograms to show how confident model was
 plt.figure(figsize=(8,5))
 plt.hist(proba_recommended, bins=30, alpha=0.6, color='green', label='Actual Recommended (1)', edgecolor='black')
 plt.hist(proba_not_recommended, bins=30, alpha=0.6, color='red', label='Actual Not Recommended (0)', edgecolor='black')
@@ -90,6 +89,22 @@ plt.hist(proba_not_recommended, bins=30, alpha=0.6, color='red', label='Actual N
 plt.title('Predicted Probability Distribution by Target Output')
 plt.xlabel('Predicted Probability of Recommendation')
 plt.ylabel('Frequency')
+plt.legend()
+plt.show()
+
+# calculate ROC curve
+y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
+roc_auc = auc(fpr, tpr)
+# plot the ROC curve
+plt.figure()
+plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], 'k--', label='No Skill')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve for Steam Recommendation Classification')
 plt.legend()
 plt.show()
 
