@@ -76,3 +76,19 @@ plt.ylabel('True Positive Rate')
 plt.title('ROC Curve for Steam Recommendation Classification')
 plt.legend()
 plt.show()
+
+# plot the probability distribution for recommendation to see prediction trends, essentially a confidence scale from 0 being least confident that the output = 1 (recommended) to 1 being most confident
+# separate probabilities by actual class
+proba_recommended = y_pred_proba[y_test == 1]
+proba_not_recommended = y_pred_proba[y_test == 0]
+
+# plot overlapping histograms to show how confident model was
+plt.figure(figsize=(8,5))
+plt.hist(proba_recommended, bins=30, alpha=0.6, color='green', label='Actual Recommended (1)', edgecolor='black')
+plt.hist(proba_not_recommended, bins=30, alpha=0.6, color='red', label='Actual Not Recommended (0)', edgecolor='black')
+
+plt.title('Predicted Probability Distribution by Target Output')
+plt.xlabel('Predicted Probability of Recommendation')
+plt.ylabel('Frequency')
+plt.legend()
+plt.show()
