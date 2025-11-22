@@ -11,7 +11,7 @@ from sklearn.metrics import classification_report, ConfusionMatrixDisplay, confu
 filteredDf = pd.read_csv('CSV_files/filtered_Df.csv')
 randomizedDf = filteredDf.sample(frac = 1, random_state = 42)
 randomizedDf = randomizedDf.reset_index(drop = True)
-# must encode categorical columns to be numerical
+# must encode categorical columns to be binary
 lists = ["categories", "genres", "tags"] # columns that have lists as values
 strings = ["developers", "publishers"] # columns with strings as values
 numerics = ["price", "windows", "mac", "linux"]
@@ -19,19 +19,19 @@ numerics = ["price", "windows", "mac", "linux"]
 mlbDfs = []
 for column in lists:
     mlb = MultiLabelBinarizer(sparse_output = False)
-    matrix = mlb.fit_transform(randomizedDf[column])           # sparse (n_samples, n_labels_for_column)
+    matrix = mlb.fit_transform(randomizedDf[column])           # matrix created
     dfColumn = pd.DataFrame(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column
     mlbDfs.append(dfColumn)     # appends each column in dataframe to one dataframe
-listsTransformed = pd.concat(mlbDfs, axis = 1)
+listsTransformed = pd.concat(mlbDfs, axis = 1) # concatenates the column dataframes to one dataframe
 
 ohe = OneHotEncoder(handle_unknown = "ignore", sparse_output = False)
-stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # specifically for sparse matrices, converts to DF
+stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # converts string columns to binary columns, converts that to a dataframe to be concatenated with lists and numerics, gets meaningful names for features
 
-# choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for sparse output
+# choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for large data
 # pipeline from scikit, makes fitting data very easy with SVD, using over "model"
 pipeline = Pipeline([("svd", TruncatedSVD(n_components = 150, random_state=42)),    # 150 features
                      ("clf", LogisticRegression(max_iter=1000))]) # max_iter = 1000 for logistic regression to balance convergence and performance
-X = pd.concat([stringsTransformed, listsTransformed, randomizedDf[numerics]], axis = 1)
+X = pd.concat([stringsTransformed, listsTransformed, randomizedDf[numerics]], axis = 1) # axis = 1 means columns
 y = randomizedDf['recommendation']
 # split for training and testing
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, random_state = 12, shuffle = True)

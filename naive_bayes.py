@@ -21,15 +21,15 @@ numerics = ["price", "windows", "mac", "linux"]
 mlbDfs = []
 for column in lists:
     mlb = MultiLabelBinarizer(sparse_output = False)
-    matrix = mlb.fit_transform(randomizedDf[column])           # sparse (n_samples, n_labels_for_column)
+    matrix = mlb.fit_transform(randomizedDf[column])           # matrix created
     dfColumn = pd.DataFrame(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column
     mlbDfs.append(dfColumn)     # appends each column in dataframe to one dataframe
-listsTransformed = pd.concat(mlbDfs, axis = 1)
+listsTransformed = pd.concat(mlbDfs, axis = 1) # concatenates the column dataframes to one dataframe
 
 ohe = OneHotEncoder(handle_unknown = "ignore", sparse_output = False)
-stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # specifically for sparse matrices, converts to DF
+stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # converts string columns to binary columns, converts that to a dataframe to be concatenated with lists and numerics, gets meaningful names for features
 
-# choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for sparse output
+# choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for large data
 # pipeline from scikit, makes fitting data very easy with SVD, using over "model"
 pipeline = Pipeline([("svd", TruncatedSVD(n_components = 150, random_state=42)),    # 150 features
                      ("clf", GaussianNB())])
