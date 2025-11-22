@@ -20,25 +20,25 @@ for column in gamesData.columns:    # loops through all columns
             cleanedColumn.append(np.nan)    # convert the empty cell to an ACTUAL null
         else: cleanedColumn.append(cell)    # else just append it
     gamesData[column] = cleanedColumn   # set column equal to the new cleaned one
-
+print(gamesData.head)
 # want to convert categorical columns from string looking lists to actual lists
 categoricalColumns = ["categories", "genres", "tags", "developers", "publishers"]    # empty set to store the columns i want to clean
-cleanedColumn = []
-for column in gamesData.categoricalColumns:
+for column in categoricalColumns:
+    cleanedColumn = []
     for cell in gamesData[column]:
         if cell in ('None', 'NaN', 'nan', ''):
             cleanedColumn.append(np.nan)      # if NaN already, then just append to this new empty set
-        elif isinstance(cell, str) and cell.startswith('{') and cell.endswith('}') or cell.startswith('[') and cell.endswith(']'):     # make sure it's a string
+        elif isinstance(cell, str) and cell.startswith('{') and cell.endswith('}') or isinstance(cell, str) and cell.startswith('[') and cell.endswith(']'):     # make sure it's a string
             try:
                 cleanedColumn.append(list(ast.literal_eval(cell)))   # literal eval turns the cell from a literal into a python object, and the list()
-                                                                   # function turns it into, a more usable, list, which then
+                                                                  # function turns it into, a more usable, list, which then
                                                                    # gets appended to the new column
             except (ValueError, SyntaxError):   # good practice to have exception with ast.literal_eval for safety issues
                 cleanedColumn.append(np.nan)
         else: cleanedColumn.append(cell)
     gamesData[column] = cleanedColumn
+print(gamesData[categoricalColumns])
 # want to remove # of people who voted for tags in the column and just leave the tag
-gamesData['tags'] = gamesData['tags'].str.replace(r'[0-9:]', '', regex=True) # gets rid of the numbers and colon
 # get rid of any unnecessary columns
 gamesData = gamesData.drop(columns = {'appid', 'release_date', 'dlc_count', 'required_age',
                                       'detailed_description', 'about_the_game',
@@ -53,7 +53,7 @@ gamesData = gamesData.drop(columns = {'appid', 'release_date', 'dlc_count', 'req
                                       'median_playtime_2weeks', 'peak_ccu', 'pct_pos_recent',
                                       'screenshots', 'movies', 'num_reviews_recent', 'discount',
                                       'metacritic_score', 'positive', 'negative' })     # I don't want to train my algorithm with any of these columns (missing lots of data, unusable, doesn't exactly correlate to a recommendation, no image processing/ links)
-# drop all rows that have empty values in any column
+# drop all rows that have empty values in any column being used
 gamesData = gamesData.dropna()
 # rename column to reflect entries, being the percentage of positive reviews out of total reviews
 gamesData = gamesData.rename(columns = {'pct_pos_total': 'pos_rev_pct'})
