@@ -12,7 +12,7 @@ gamesData = gamesData.drop_duplicates()
 gamesData = gamesData[~gamesData['name'].str.contains('playtest', case = False, na = False)]
 # want to change empty cells to null, they are currently strings with nothing inside
 for column in gamesData.columns:    # loops through all columns
-    cleanedColumn = []      # temp set for cleaned values
+    cleanedColumn = []      # temp set for cleaned values, resets for each column
     for cell in gamesData[column]:      # loops through each specific cell in column
         if (pd.isna(cell) or
                 isinstance(cell, str) and cell.strip() in ("[]", "{}", "") or
