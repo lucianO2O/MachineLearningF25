@@ -51,7 +51,7 @@ print(randomizedDf.describe())
 print(randomizedDf['recommendation'].value_counts()) # counts how many of each output the column has (both 7000, I did this in the data cleaning step)
 X_svd = pipeline.named_steps['svd'].transform(X_train)
 print(f"Original shape: {randomizedDf.shape}")
-print(X_svd.shape, "shape after SVD")
+print(f"Shape after SVD: {X_svd.shape}")
 # visualization
 # confusion matrix tells which classes the model is confusing
 disp = ConfusionMatrixDisplay(confusion_matrix = confusion_matrix(y_test, y_pred), display_labels = pipeline.classes_)

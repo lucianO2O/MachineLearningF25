@@ -53,7 +53,8 @@ print(randomizedDf.describe())
 print(randomizedDf['recommendation'].value_counts()) # counts how many of each output the column has (both 7000, I did this in the data cleaning step)
 X_svd = pipeline.named_steps['svd'].transform(X_train)
 print(f"Original shape: {randomizedDf.shape}")
-print(X_svd.shape, "shape after SVD")
+print(f"Shape after SVD: {X_svd.shape}")
+
 # plot recommendations
 randomizedDf['recommendation'].value_counts().plot(kind = 'bar', color = 'skyblue') # plots the # of recommendations per 1/0
 plt.title('Distribution of recommendations') #  labels and titles
