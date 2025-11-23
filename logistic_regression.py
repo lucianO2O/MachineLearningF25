@@ -29,8 +29,8 @@ stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), colu
 
 # choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for large data
 # pipeline from scikit, makes fitting data very easy with SVD, using over "model"
-pipeline = Pipeline([("svd", TruncatedSVD(n_components = 150, random_state=42)),    # 150 features
-                     ("clf", LogisticRegression(max_iter=1000))]) # max_iter = 1000 for logistic regression to balance convergence and performance
+pipeline = Pipeline([("svd", TruncatedSVD(n_components = 500, random_state=42)),    # 150 features
+                     ("clf", LogisticRegression(max_iter = 2000, C = 10.0, class_weight = 'balanced'))]) # max_iter = 1000 for logistic regression to balance convergence and performance
 X = pd.concat([stringsTransformed, listsTransformed, randomizedDf[numerics]], axis = 1) # axis = 1 means columns
 y = randomizedDf['recommendation']
 # split for training and testing
