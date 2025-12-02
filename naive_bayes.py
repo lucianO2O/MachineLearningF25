@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, MultiLabelBinarizer
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc, r2_score
 from sklearn.metrics import classification_report
 from matplotlib import pyplot as plt
 
@@ -21,8 +21,11 @@ numerics = ["price", "windows", "mac", "linux"]
 mlbDfs = []
 for column in lists:
     mlb = MultiLabelBinarizer(sparse_output = False)
-    matrix = mlb.fit_transform(randomizedDf[column])           # matrix created
-    dfColumn = pd.DataFrame(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column
+    randomizedDf[column] = randomizedDf[column].str.replace("[", "") # removing all brackets and single quotes to not interfere with retrieving names for new columns
+    randomizedDf[column] = randomizedDf[column].str.replace("]", "")
+    randomizedDf[column] = randomizedDf[column].str.replace("'", "")
+    matrix = mlb.fit_transform(randomizedDf[column].str.split(', '))           # matrix created, split on comma for names
+    dfColumn = pd.DataFrame(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column generated
     mlbDfs.append(dfColumn)     # appends each column in dataframe to one dataframe
 listsTransformed = pd.concat(mlbDfs, axis = 1) # concatenates the column dataframes to one dataframe
 

@@ -19,13 +19,19 @@ numerics = ["price", "windows", "mac", "linux"]
 mlbDfs = []
 for column in lists:
     mlb = MultiLabelBinarizer(sparse_output = False)
-    matrix = mlb.fit_transform(randomizedDf[column])           # matrix created
-    dfColumn = pd.DataFrame(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column
+    randomizedDf[column] = randomizedDf[column].str.replace("[", "") # removing all brackets and single quotes to not interfere with retrieving names for new columns
+    randomizedDf[column] = randomizedDf[column].str.replace("]", "")
+    randomizedDf[column] = randomizedDf[column].str.replace("'", "")
+    matrix = mlb.fit_transform(randomizedDf[column].str.split(', '))           # matrix created, split on comma for names
+    dfColumn = pd.DataFrame(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column generated
     mlbDfs.append(dfColumn)     # appends each column in dataframe to one dataframe
 listsTransformed = pd.concat(mlbDfs, axis = 1) # concatenates the column dataframes to one dataframe
 
 ohe = OneHotEncoder(handle_unknown = "ignore", sparse_output = False)
 stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # converts string columns to binary columns, converts that to a dataframe to be concatenated with lists and numerics, gets meaningful names for features
+
+stringsTransformed.to_csv('CSV_files/strings_transformed.csv', index = False)
+listsTransformed.to_csv('CSV_files/lists_transformed.csv', index = False)
 
 # choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for large data
 # pipeline from scikit, makes fitting data very easy with SVD, using over "model"
@@ -52,9 +58,7 @@ print(randomizedDf['recommendation'].value_counts()) # counts how many of each o
 X_svd = pd.DataFrame(pipeline.named_steps['svd'].transform(X_train))
 print(f"Original shape: {randomizedDf.shape}")
 print(f"Shape after SVD: {X_svd.shape}")
-
 # visualization
-
 # confusion matrix tells which classes the model is confusing
 disp = ConfusionMatrixDisplay(confusion_matrix = confusion_matrix(y_test, y_pred), display_labels = pipeline.classes_)
 disp.plot(cmap='Blues')
@@ -91,4 +95,18 @@ plt.title('Predicted Probability Distribution by Target Output')
 plt.xlabel('Predicted Probability of Recommendation')
 plt.ylabel('Frequency')
 plt.legend()
+plt.show()
+
+
+# Source - https://stackoverflow.com/a/29432741
+# Posted by jrjc, modified by community. See post 'Timeline' for change history
+# Retrieved 2025-12-02, License - CC BY-SA 4.0
+
+f = plt.figure(figsize=(19, 15))
+plt.matshow(filteredDf.corr(), fignum=f.number)
+plt.xticks(range(filteredDf.select_dtypes(['number']).shape[1]), filteredDf.select_dtypes(['number']).columns, fontsize=14, rotation=45)
+plt.yticks(range(filteredDf.select_dtypes(['number']).shape[1]), filteredDf.select_dtypes(['number']).columns, fontsize=14)
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize=14)
+plt.title('Correlation Matrix', fontsize=16)
 plt.show()
