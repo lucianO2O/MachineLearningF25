@@ -22,21 +22,34 @@ for column in lists:
     randomizedDf[column] = randomizedDf[column].str.replace("[", "") # removing all brackets and single quotes to not interfere with retrieving names for new columns
     randomizedDf[column] = randomizedDf[column].str.replace("]", "")
     randomizedDf[column] = randomizedDf[column].str.replace("'", "")
+    randomizedDf[column] = randomizedDf[column].str.replace("-", "")
     matrix = mlb.fit_transform(randomizedDf[column].str.split(', '))           # matrix created, split on comma for names
     dfColumn = pd.DataFrame(matrix, columns = [f"{column}__{label}" for label in mlb.classes_]) # meaningful column names for each column generated
     mlbDfs.append(dfColumn)     # appends each column in dataframe to one dataframe
 listsTransformed = pd.concat(mlbDfs, axis = 1) # concatenates the column dataframes to one dataframe
 
+# genres, categories, and tags have duplicate values (tags__action, genres__action, etc), want to drop the non-genre duplicates
+priorityOrder = ['genres', 'tags', 'categories'] # want to order by genres, so tags and categories drop the dupes
+sortedColumns = sorted(listsTransformed.columns, key = lambda x: priorityOrder.index(x.split("__")[0])) # sorted dataframe by priority order based on column prefix ("genres", "tags", "categories")
+listsTransformed = listsTransformed[sortedColumns] # reorder by priority
+
+seenLabels = [] # empty list to hold labels that have been seen (in genres)
+columnsToKeep = []
+for column in listsTransformed.columns:
+    label = column.split("__")[1]  # the suffix ("action", "adventure")
+    if label not in seenLabels:
+        columnsToKeep.append(column)
+        seenLabels.append(label)
+listsTransformed = listsTransformed[columnsToKeep]
+
+# OHE
 ohe = OneHotEncoder(handle_unknown = "ignore", sparse_output = False)
 stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # converts string columns to binary columns, converts that to a dataframe to be concatenated with lists and numerics, gets meaningful names for features
 
-stringsTransformed.to_csv('CSV_files/strings_transformed.csv', index = False)
-listsTransformed.to_csv('CSV_files/lists_transformed.csv', index = False)
-
 # choose n_components for SVD (dimensionality reduction), TruncatedSVD works better for large data
 # pipeline from scikit, makes fitting data very easy with SVD, using over "model"
-pipeline = Pipeline([("svd", TruncatedSVD(n_components = 500, random_state=42)),    # 150 features
-                     ("clf", LogisticRegression(max_iter = 2000, C = 10.0, class_weight = 'balanced'))]) # max_iter = 1000 for logistic regression to balance convergence and performance
+pipeline = Pipeline([("svd", TruncatedSVD(n_components = 150, random_state=42)),    # 150 features
+                     ("clf", LogisticRegression(max_iter = 2000, C = 10.0, class_weight = 'balanced'))]) # max_iter = 2000 for logistic regression to balance convergence and performance
 X = pd.concat([stringsTransformed, listsTransformed, randomizedDf[numerics]], axis = 1) # axis = 1 means columns
 y = randomizedDf['recommendation']
 # split for training and testing
@@ -51,10 +64,8 @@ pipeline.predict(X_test)
 print(f"Accuracy = {pipeline.score(X_test, y_test)}")
 print("Classification Report for training:\n", classification_report(y_train, y_pred_train))
 print("Classification Report for testing:\n", classification_report(y_test, y_pred))
-# general info about cleaned dataset
-print(randomizedDf.info())
-print(randomizedDf.describe())
-print(randomizedDf['recommendation'].value_counts()) # counts how many of each output the column has (both 7000, I did this in the data cleaning step)
+
+print(randomizedDf['recommendation'].value_counts()) # counts how many of each output the column has
 X_svd = pd.DataFrame(pipeline.named_steps['svd'].transform(X_train))
 print(f"Original shape: {randomizedDf.shape}")
 print(f"Shape after SVD: {X_svd.shape}")
@@ -97,16 +108,13 @@ plt.ylabel('Frequency')
 plt.legend()
 plt.show()
 
+categorical = pd.concat([listsTransformed, stringsTransformed], axis = 1)
+top15 = categorical.sum().sort_values(ascending=False).head(15)
+top15_features = top15.index
+corr_top15 = X[top15_features].corr()
 
-# Source - https://stackoverflow.com/a/29432741
-# Posted by jrjc, modified by community. See post 'Timeline' for change history
-# Retrieved 2025-12-02, License - CC BY-SA 4.0
-
-f = plt.figure(figsize=(19, 15))
-plt.matshow(filteredDf.corr(), fignum=f.number)
-plt.xticks(range(filteredDf.select_dtypes(['number']).shape[1]), filteredDf.select_dtypes(['number']).columns, fontsize=14, rotation=45)
-plt.yticks(range(filteredDf.select_dtypes(['number']).shape[1]), filteredDf.select_dtypes(['number']).columns, fontsize=14)
-cb = plt.colorbar()
-cb.ax.tick_params(labelsize=14)
-plt.title('Correlation Matrix', fontsize=16)
+plt.figure(figsize=(10,8))
+sns.heatmap(corr_top15, annot=False, cmap='viridis')
+plt.title("Correlation Heatmap (Top 10 Features)")
+plt.tight_layout() # fits graph with parameters to screen
 plt.show()
