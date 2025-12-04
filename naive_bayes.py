@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.decomposition import TruncatedSVD
@@ -29,6 +28,21 @@ for column in lists:
     mlbDfs.append(dfColumn)     # appends each column in dataframe to one dataframe
 listsTransformed = pd.concat(mlbDfs, axis = 1) # concatenates the column dataframes to one dataframe
 
+# genres, categories, and tags have duplicate values (tags__action, genres__action, etc), want to drop the non-genre duplicates
+priorityOrder = ['genres', 'tags', 'categories'] # want to order by genres, so tags and categories drop the dupes
+sortedColumns = sorted(listsTransformed.columns, key = lambda x: priorityOrder.index(x.split("__")[0])) # sorted dataframe by priority order based on column prefix ("genres", "tags", "categories")
+listsTransformed = listsTransformed[sortedColumns] # reorder by priority
+
+seenLabels = [] # empty list to hold labels that have been seen (in genres)
+columnsToKeep = []
+for column in listsTransformed.columns:
+    label = column.split("__")[1]  # the suffix ("action", "adventure")
+    if label not in seenLabels:
+        columnsToKeep.append(column)
+        seenLabels.append(label)
+listsTransformed = listsTransformed[columnsToKeep]
+
+
 ohe = OneHotEncoder(handle_unknown = "ignore", sparse_output = False)
 stringsTransformed = pd.DataFrame(ohe.fit_transform(randomizedDf[strings]), columns = ohe.get_feature_names_out(strings)) # converts string columns to binary columns, converts that to a dataframe to be concatenated with lists and numerics, gets meaningful names for features
 
@@ -50,10 +64,8 @@ pipeline.predict(X_test)
 print(f"Accuracy = {pipeline.score(X_test, y_test)}")
 print("Classification Report for training:\n", classification_report(y_train, y_pred_train))
 print("Classification Report for testing:\n", classification_report(y_test, y_pred))
-# general info about cleaned dataset
-print(randomizedDf.info())
-print(randomizedDf.describe())
-print(randomizedDf['recommendation'].value_counts()) # counts how many of each output the column has (both 7000, I did this in the data cleaning step)
+
+print(randomizedDf['recommendation'].value_counts()) # counts how many of each output the column has
 X_svd = pipeline.named_steps['svd'].transform(X_train)
 print(f"Original shape: {randomizedDf.shape}")
 print(f"Shape after SVD: {X_svd.shape}")
